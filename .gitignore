@@ -1,0 +1,34 @@
+# 依赖目录
+node_modules/
+
+# 构建输出
+dist/
+build/
+
+# 环境配置文件
+.env
+.env.local
+.env.*.local
+
+# IDE - VSCode 特定
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 日志输出
+*.log
+*.pid
+*.pid.lock
+
+# 其他常见的应忽略文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+
+# 个人IDE配置
+.idea/

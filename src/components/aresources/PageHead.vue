@@ -23,11 +23,28 @@
     <Drawer
       :width="drawerWidth"
       v-model:modelValue="drawerVisible"
-      title="用户菜单"
+      title="导航菜单"
       placement="right"
       :mask-closable="false"
     >
-      <p>你的用户信息</p>
+      <Card class="user-info-card" style="width:250px" bordered shadow>
+        <p style="font-weight: 800; font-size: 16px">
+          <Icon type="md-contact" /> 你的用户信息
+        </p>
+        <div class="user-info">
+          <img :src="user.scUserAvatars || 'http://sfrsrdckw.hn-bkt.clouddn.com/usertximg/logo_duck_c.png'" alt="用户头像" class="user-avatar" />
+          <div style="zoom:82%; margin:0px" class="user-details">
+            <p><strong>用户名：</strong>{{ user.userName }}</p>
+            <p><strong>邮箱：</strong>{{ user.userEmail }}</p>
+            <p><strong>角色：</strong>{{ user.userRole }}</p>
+            <p><strong>电话：</strong>{{ user.userPhone }}</p>
+            <p><strong>性别：</strong>{{ user.userGender }}</p>
+            <p><strong>在线状态：</strong>{{ user.userOnlineStatus }}</p>
+          </div>
+        </div>
+        <Divider />
+        <p style="margin-top:5px;zoom:0.82"><strong>个人留言：</strong>{{ user.userBio }}</p>
+      </Card>
       <Menu mode="vertical" active-name="1-1" @on-select="handleSelect">
         <MenuItem name="1-1">
           <Icon type="md-home"></Icon>
@@ -38,7 +55,7 @@
           我的文章管理
         </MenuItem>
         <MenuItem name="1-3">
-          <Icon type="md-bottle"></Icon>
+          <Icon type="ios-bonfire" />
           校园漂流瓶
         </MenuItem>
         <MenuItem name="1-4" style="margin-bottom: 10px">
@@ -81,7 +98,10 @@ import {
   MenuItem,
   Submenu,
   Icon,
+  Card,
+  Divider
 } from 'view-ui-plus';
+import axios from 'axios';
 import Cookies from 'js-cookie';
 
 export default {
@@ -94,11 +114,14 @@ export default {
     MenuItem,
     Submenu,
     Icon,
+    Card,
+    Divider
   },
   data() {
     return {
       user: null,
       drawerVisible: false,
+      userAvatar: '/path/to/default/avatar.png', // 默认头像路径
     };
   },
   computed: {
@@ -108,6 +131,7 @@ export default {
   },
   created() {
     this.checkUser();
+    this.fetchUserData();
   },
   methods: {
     checkUser() {
@@ -120,6 +144,23 @@ export default {
           userEmail,
           userRole,
         };
+      }
+    },
+    fetchUserData() {
+      const userId = Cookies.get('userId');
+      if (userId) {
+        axios.get(`/api/scUsers/get_scuserbyid/${userId}`)
+          .then(response => {
+            if (response.data.success) {
+              this.user = response.data.data;
+            } else {
+              Message.error('无法获取用户信息');
+            }
+          })
+          .catch(error => {
+            console.error(error);
+            Message.error('获取用户信息时出错');
+          });
       }
     },
     switchToLogin() {
@@ -190,6 +231,28 @@ export default {
   margin-right: 15px;
 }
 
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 15px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-info-card {
+  margin-bottom: 20px;
+}
+
 .account-management-title {
   padding: 0px;
   font-size: 16px;
@@ -198,5 +261,9 @@ export default {
   margin-bottom: -25px; /* 调整间距，确保视觉效果符合设计 */
   margin-left: 27px;
   font-size: 14px;
+}
+
+.ivu-divider {
+  margin: 0px;
 }
 </style>

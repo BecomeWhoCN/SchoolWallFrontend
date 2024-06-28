@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import indexView from '@/views/indexView.vue'
 import LoginResource from '@/views/LoginResource.vue'
+import UploadAvatat from '@/views/UploadAvatar.vue'
 
 
 const apiAddress = 'http://192.168.12.225:8081/';
@@ -16,6 +17,11 @@ const routes = [
     name: 'login-resource',
     component: LoginResource
   
+  },
+  {
+    path: '/upload-avatar',
+    name: 'upload-avatar',
+    component: UploadAvatat
   }
 ]
 

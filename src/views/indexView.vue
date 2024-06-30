@@ -49,20 +49,18 @@ html, body, #app {
 }
 
 .index-banner {
-  background-image: url('@/assets/background/indexHeadBackGround.jpg');
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-size: 30px;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('@/assets/background/indexHeadBackGround.jpg');
-  background-blend-mode: overlay;
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('@/assets/background/indexHeadBackGround.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 30px;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
 }
 
 .index-banner > h1 {

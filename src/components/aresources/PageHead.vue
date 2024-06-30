@@ -14,8 +14,8 @@
           <Button type="text" @click="toggleDrawer">菜单</Button>
         </Tooltip>
 
-        <Tooltip content="退出登录状态">
-          <Button type="text" @click="logout">退出</Button>
+        <Tooltip content="登出">
+          <a href="/login-resource"><Button type="text" @click="logout">退出</Button></a>
         </Tooltip>
       </div>
     </div>
@@ -27,7 +27,7 @@
       placement="right"
       :mask-closable="false"
     >
-      <Card class="user-info-card" style="width:250px" bordered shadow>
+      <Card v-if="user" class="user-info-card" style="width:250px" bordered shadow>
         <p style="font-weight: 800; font-size: 16px">
           <Icon type="md-contact" /> 你的用户信息
         </p>
@@ -78,13 +78,21 @@
             <Icon type="ios-sad" />
             拉黑记录
           </MenuItem>
-          <MenuItem name="2-4">
+          <MenuItem name="2-4" @click="confirmDeactivation">
             <Icon type="md-alert" />
             注销账号
           </MenuItem>
         </Submenu>
       </Menu>
     </Drawer>
+
+    <Modal v-model="deactivationConfirmVisible" title="确认注销账号" @on-ok="showPasswordModal">
+      <p>确定要注销账号吗？这将导致账号不可用。</p>
+    </Modal>
+
+    <Modal v-model="passwordModalVisible" title="输入密码" @on-ok="deactivateAccount">
+      <Input v-model="password" type="password" placeholder="请输入密码" />
+    </Modal>
   </div>
 </template>
 
@@ -99,7 +107,9 @@ import {
   Submenu,
   Icon,
   Card,
-  Divider
+  Divider,
+  Modal,
+  Input
 } from 'view-ui-plus';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -115,13 +125,18 @@ export default {
     Submenu,
     Icon,
     Card,
-    Divider
+    Divider,
+    Modal,
+    Input
   },
   data() {
     return {
       user: null,
       drawerVisible: false,
       userAvatar: '/path/to/default/avatar.png', // 默认头像路径
+      deactivationConfirmVisible: false,
+      passwordModalVisible: false,
+      password: ''
     };
   },
   computed: {
@@ -183,7 +198,7 @@ export default {
     },
     handleSelect(name) {
       if (name === '1-1') {
-        this.$router.push('/unfinished-pages');
+        this.$router.push('/');
       } else if (name === '1-2') {
         this.$router.push('/friends');
       } else if (name === '1-3') {
@@ -191,12 +206,58 @@ export default {
       } else if (name === '1-4') {
         this.$router.push('/groups');
       } else if (name === '2-1') {
-        this.$router.push('/change-password');
+        this.$router.push('/user-settings/change-password');
       } else if (name === '2-2') {
-        this.$router.push('/update-profile');
+        this.$router.push('/user-settings/update-usermessage');
+      } else if (name === '2-3') {
+        this.$router.push('/user-settings/account-management');
+      } else if (name === '2-4') {
+        this.confirmDeactivation();
       }
     },
-  },
+    confirmDeactivation() {
+      this.deactivationConfirmVisible = true;
+    },
+    showPasswordModal() {
+      this.deactivationConfirmVisible = false;
+      this.passwordModalVisible = true;
+    },
+    async deactivateAccount() {
+      const userId = Cookies.get('userId');
+      try {
+        const formData = new FormData();
+        formData.append('id', userId);
+        formData.append('userPasswd', this.password);
+
+        const response = await axios.post('/api/scUsers/update_userStatus', formData);
+
+        if (response.data.success) {
+          Message.success('正在执行删除用户操作');
+          // 将cookies改为null
+          Cookies.remove('userId');
+          Cookies.remove('userEmail');
+          Cookies.remove('userRole');
+          // 删除用户信息
+          this.user = null;
+          // 跳转到登录页面
+          this.$router.push('/login-resource');
+          Message.success('用户已登出 跳转至首页');
+
+          this.user = null;
+          // 关闭侧边栏
+          this.drawerVisible = false;
+        } else {
+          Message.error(response.data.message || '用户状态修改失败');
+        }
+      } catch (error) {
+        console.error('修改用户状态出错:', error);
+        Message.error('修改用户状态出错，请稍后再试');
+      } finally {
+        this.passwordModalVisible = false;
+        this.password = '';
+      }
+    }
+  }
 };
 </script>
 

@@ -1,5 +1,6 @@
 <template>
   <div class="login-form-wrapper">
+    <a href="/"><Button class="backhome" shape="circle"><Icon type="md-home" /> 回到首页</Button></a>
     <div class="login-form-container">
       <img src="@/assets/aresources/logo/logo_brown_bear.png" alt="Logo" class="logo" />
       <div>
@@ -138,5 +139,13 @@ export default {
 .titlep {
   font-size: 1rem;
   margin-top: -10px;
+}
+
+.backhome {
+  position: fixed;
+  top:40px;
+  left: 40px;
+  border-width: 2px;
+  zoom: 110%;
 }
 </style>

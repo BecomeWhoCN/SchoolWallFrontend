@@ -1,5 +1,6 @@
 <template>
   <div class="lost-password-form-wrapper">
+    <a href="/"><Button class="backhome" shape="circle"><Icon type="md-home" /> 回到首页</Button></a>
     <div class="lost-password-form-container">
       <img src="@/assets/aresources/logo/logo_brown_bear.png" alt="Logo" class="logo" />
       <div>
@@ -28,6 +29,7 @@
 <script>
 import { Form, FormItem, Input, Button, Message } from 'view-ui-plus';
 import axios from 'axios';
+import router from '@/router';
 
 export default {
   name: 'LostPassword',
@@ -71,6 +73,8 @@ export default {
         if (response.data.success) {
           Message.success('密码更新成功');
           this.switchToLogin();
+          // 跳转到首页页面
+          router.push('/login-resource');
         } else {
           Message.error(response.data.message || '密码更新失败');
         }
@@ -140,5 +144,13 @@ export default {
   font-size: 0.9rem;
   margin-top: 15px;
   text-align: center;
+}
+
+.backhome {
+  position: fixed;
+  top:40px;
+  left: 40px;
+  border-width: 2px;
+  zoom: 110%;
 }
 </style>

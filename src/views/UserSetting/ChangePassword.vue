@@ -35,10 +35,11 @@ import Cookies from 'js-cookie';
 import PageHead from '@/components/aresources/PageHead.vue'
 import PageFoot from '@/components/aresources/PageFoot.vue'
 
+
 export default {
   components: {
         PageHead,
-        PageFoot
+        PageFoot,
     },
   data() {
     return {

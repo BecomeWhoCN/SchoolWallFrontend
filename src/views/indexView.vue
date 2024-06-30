@@ -10,10 +10,15 @@
                 <p>滴滴~ 美好生活记录一下~</p>
             </div>
 
+            <!-- 文章展示 -->
+            <IndexPage />
+
+            <!-- 校园新闻 -->
+            <IndexScNewsVue class="index-scnews" />
         </main>
         
 
-        <PageFoot/>
+        <PageFoot class="PageFoot"/>
     </div>
 </template>
 
@@ -21,13 +26,17 @@
 import { Row, Col } from 'view-ui-plus'
 import PageHead from '@/components/aresources/PageHead.vue'
 import PageFoot from '@/components/aresources/PageFoot.vue'
+import IndexPage from '@/components/IndexCom/IndexPage.vue'
+import IndexScNewsVue from '@/components/IndexCom/IndexScNews.vue'
 
 export default {
     components: {
         Row,
         Col,
         PageHead,
-        PageFoot
+        PageFoot,
+        IndexPage,
+        IndexScNewsVue
     }
 }
 </script>
@@ -77,4 +86,9 @@ html, body, #app {
     margin-top: 20px;
     text-align: center;
 }
+
+.PageFoot {
+  margin-top: 40px;
+}
+
 </style>

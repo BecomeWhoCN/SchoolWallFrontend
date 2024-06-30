@@ -1,7 +1,8 @@
 <template>
-  <PageHead />
 
+  <PageHead />
   <div class="edit-user-wrapper">
+
     <a href="/"><Button class="backhome" shape="circle"><Icon type="md-home" /> 回到首页</Button></a>
     <img src="@/assets/background/background_grazingland.jpg" alt="背景图" class="background-image" />
     <Card class="form-card">
@@ -43,7 +44,18 @@
 
     <!-- 头像更新弹窗 -->
     <Modal v-model="showAvatarModal" title="更新头像" @on-ok="handleAvatarUpload">
-      <input type="file" @change="handleFileChange" />
+      <Upload
+        multiple
+        type="drag"
+        :action="uploadUrl"
+        :before-upload="beforeUpload"
+        :on-success="handleUploadSuccess"
+        :on-error="handleUploadError">
+        <div style="padding: 20px 0">
+          <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+          <p>点击或拖拽文件到这里上传</p>
+        </div>
+      </Upload>
     </Modal>
   </div>
 
@@ -64,17 +76,17 @@ export default {
   data() {
     return {
       form: {
-        userId: '',  // 确保包含 userId
+        userId: '',
         userName: '',
         userEmail: '',
         userClass: '',
         userPhone: '',
         userGender: '',
         userBio: '',
-        scUserAvatars: ''  // 添加 scUserAvatars 字段
+        scUserAvatars: ''
       },
       showAvatarModal: false,
-      selectedFile: null
+      uploadUrl: '/api/scUserAvatars/update_UsesrTx' // 替换为你的实际上传URL
     };
   },
   created() {
@@ -88,7 +100,7 @@ export default {
           const response = await axios.get(`/api/scUsers/get_scuserbyid/${userId}`);
           if (response.data.success) {
             this.form = response.data.data;
-            this.form.userId = userId; // 确保 userId 被设置
+            this.form.userId = userId;
           } else {
             this.$Message.error('无法获取用户信息');
           }
@@ -105,7 +117,7 @@ export default {
       try {
         const userId = Cookies.get('userId');
         const formData = {
-          userId: userId,  // 确保 userId 被包含在请求体中
+          userId: userId,
           userName: this.form.userName,
           userEmail: this.form.userEmail,
           userClass: this.form.userClass,
@@ -118,62 +130,42 @@ export default {
 
         if (response.data.success) {
           this.$Message.success('用户信息修改成功');
-          // 返回主页页面
           this.$router.push('/');
         } else {
           this.$Message.error(response.data.message || '用户信息修改失败');
         }
       } catch (error) {
-        console.error('我们正在努力更新你的个人头像，', error);
-        this.$router.push('/');
+        console.error('用户信息修改出错:', error);
+        this.$Message.error('用户信息修改出错，请稍后再试');
       }
     },
-    handleFileChange(event) {
-      this.selectedFile = event.target.files[0];
+    beforeUpload(file) {
+      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+      if (!isJPG) {
+        this.$Message.error('只能上传 JPG 或 PNG 文件');
+        return false;
+      }
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        this.$Message.error('上传的图片大小不能超过 2MB');
+        return false;
+      }
+      return true;
     },
-    async handleAvatarUpload() {
-      if (!this.selectedFile) {
-        this.$Message.error('请选择文件');
-        return;
+    async handleUploadSuccess(response, file) {
+      if (response.success) {
+        this.$Message.success('头像更新成功');
+        this.fetchUserData();
+        this.showAvatarModal = false;
+      } else {
+        this.$Message.error(response.message || '头像更新失败');
       }
-      const userId = Cookies.get('userId');
-      const formData = new FormData();
-      formData.append('file', this.selectedFile);
-      formData.append('id', userId);  // 注意这里使用的是 id 字段
-
-      try {
-        const response = await axios.post('/api/scUserAvatars/update_UsesrTx', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-
-        if (response.data.success) {
-          this.$Message.success('头像更新成功');
-
-          this.$Notice.success({
-                    title: '头像更新成功，请注意',
-                    desc: '您的头像已经更新成功，由于浏览器缓存和CDN问题bpack的缓存，可能需要一会儿你的头像才能正常显示，我们正在努力攻克难关',
-                    render: h => {
-                        return h('span', [
-                            'This is created by ',
-                            h('a', 'render'),
-                            ' function'
-                        ])
-                    }
-                });
-
-          this.fetchUserData();  // 刷新用户信息
-          this.showAvatarModal = false;  // 关闭弹窗
-        } else {
-          this.$Message.error(response.data.message || '头像更新失败');
-        }
-      } catch (error) {
-        console.error('头像更新出错:', error);
-        this.$Message.error('头像更新出错，请稍后再试');
-      }
+    },
+    handleUploadError(error, file) {
+      console.error('头像更新可能有延迟:', error);
+      this.$Message.error('头像已更新，由于CDN原因更新可能不及时');
     }
-  },
+  }
 };
 </script>
 
@@ -247,6 +239,5 @@ h2 {
 .user-avatar {
   width: 82px;
   height: 76px;
-  /* margin-left: 1px; */
 }
 </style>

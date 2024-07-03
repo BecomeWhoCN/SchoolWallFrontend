@@ -6,10 +6,11 @@ import store from './store';
 import './styles/index.less';
 import SlideVerify from 'vue-monoplasty-slide-verify';
 
+
 const app = createApp(App);
 
 app.use(store)
   .use(router)
   .use(ViewUIPlus)
-  .use(SlideVerify) // 添加SlideVerify插件
+  .use(SlideVerify)
   .mount('#app');

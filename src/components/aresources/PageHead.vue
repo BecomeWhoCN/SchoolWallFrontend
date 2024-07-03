@@ -200,17 +200,21 @@ export default {
       if (name === '1-1') {
         this.$router.push('/');
       } else if (name === '1-2') {
-        this.$router.push('/friends');
+        this.$router.push('/manage-essay');
+        this.$Message.info('此功能还未完善，等待后续开发');
       } else if (name === '1-3') {
-        this.$router.push('/drift-bottles');
+        this.$router.push('/bottle-index');
+        this.$Message.info('此功能还未完善，等待后续开发');
       } else if (name === '1-4') {
-        this.$router.push('/groups');
+        this.$router.push('/my-groups');
+        this.$Message.info('此功能还未完善，等待后续开发');
       } else if (name === '2-1') {
         this.$router.push('/user-settings/change-password');
       } else if (name === '2-2') {
         this.$router.push('/user-settings/update-usermessage');
       } else if (name === '2-3') {
-        this.$router.push('/user-settings/account-management');
+        // this.$router.push('/user-settings/account-management');
+        this.$Message.info('此功能还未完善，等待后续开发');
       } else if (name === '2-4') {
         this.confirmDeactivation();
       }

@@ -53,7 +53,7 @@ export default {
       })).then(response => {
         if (response.data.success) {
           this.$Message.success('好友备注修改已生效');
-          location.reload();
+          this.$emit('nicknameUpdated');
         } else {
           this.$Message.error('备注修改失败');
         }
@@ -69,7 +69,7 @@ export default {
       })).then(response => {
         if (response.data.success) {
           this.$Message.success('删除好友成功');
-          location.reload();
+          this.$emit('nicknameUpdated');
         } else {
           this.$Message.error('删除好友失败');
         }

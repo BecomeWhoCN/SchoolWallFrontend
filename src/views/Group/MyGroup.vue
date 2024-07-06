@@ -29,9 +29,14 @@
             </TabPane>
             <TabPane label="群组" name="2">
               <div class="group-list">
-                <div v-for="group in groups" :key="group.id" class="group-item">
+                <div
+                  v-for="group in groups"
+                  :key="group.groupId"
+                  class="group-item"
+                  @click="handleGroupClick(group.groupId, group.groupName)"
+                >
                   <Avatar icon="md-contacts" />
-                  <span>{{ group.name }}</span>
+                  <span>{{ group.groupName }}</span>
                 </div>
               </div>
             </TabPane>
@@ -39,10 +44,10 @@
         </Col>
         <Col span="18" class="chat-main">
           <div class="chat-header">
-            <Avatar :src="currentFriendAvatar" size="large" icon="md-contact" />
-            <div class="chat-title">{{ currentFriendName }}</div>
+            <Avatar :src="currentChatAvatar" size="large" icon="md-contact" />
+            <div class="chat-title">{{ currentChatName }}</div>
             <MessageCall style="margin-left:380px"/>
-            <FriendSetting :friendId="currentFriendId" style="margin-left:10px"/>
+            <FriendSetting v-if="isFriendChat" :friendId="currentChatId" @nicknameUpdated="fetchFriends" style="margin-left:10px"/>
           </div>
           <div class="chat-content" ref="chatContent">
             <div
@@ -76,7 +81,7 @@
               <textarea
                 v-model="newMessage"
                 id="memo"
-                style="height: 9vh; width: 57vh; resize: none; zoom: 1.1; padding: 5px;border-radius: 8px;"
+                style="height: 80px; width: 540px; resize: none; zoom: 1.1; padding: 5px;border-radius: 8px;"
               ></textarea>
               <Tooltip content="发送消息" placement="top">
                 <Button style="zoom: 0.8" @click="sendMessage" type="primary">发 送</Button>
@@ -104,17 +109,14 @@ export default {
   data() {
     return {
       friends: [],
-      groups: [
-        { id: 1, name: "测试群组一" },
-        { id: 2, name: "测试群组二" },
-        { id: 3, name: "test333" },
-      ],
+      groups: [],
       messages: [],
       newMessage: "",
-      currentFriendName: "未选择好友",
-      currentFriendAvatar: "",
-      currentFriendId: null, // 当前好友ID
+      currentChatName: "未选择聊天对象",
+      currentChatAvatar: "",
+      currentChatId: null, // 当前聊天对象ID
       currentUserId: this.getCookie("userId"), // 当前用户ID
+      isFriendChat: true, // 标识当前是否为好友聊天
       intervalId: null, // 定时器ID
     };
   },
@@ -122,16 +124,17 @@ export default {
     sendMessage() {
       if (this.newMessage.trim() !== "") {
         const newMessage = {
+          groupId: this.isFriendChat ? null : this.currentChatId,
           senderId: this.currentUserId,
-          receiverId: this.currentFriendId,
           messageText: this.newMessage,
+          isGroup: !this.isFriendChat
         };
-        axios.post('/api/privateMessages/send', newMessage).then(response => {
+        axios.post('/api/scGroupMessages/send', newMessage).then(response => {
           if (response.data.success) {
             const message = {
               messageId: Date.now(), // 用当前时间戳作为临时ID
               senderId: this.currentUserId,
-              receiverId: this.currentFriendId,
+              receiverId: this.currentChatId,
               messageText: this.newMessage,
               messageSentAt: new Date().toLocaleString(), // 这里假设发送时间是当前时间
               attachmentUrls: []
@@ -144,7 +147,11 @@ export default {
       }
     },
     fetchMessages() {
-      axios.get(`/api/privateMessages/getMessages?userId1=${this.currentUserId}&userId2=${this.currentFriendId}`).then(response => {
+      if (this.currentChatId === null) return; // 如果没有选择聊天对象则不请求消息
+      const url = this.isFriendChat 
+        ? `/api/privateMessages/getMessages?userId1=${this.currentUserId}&userId2=${this.currentChatId}` 
+        : `/api/scGroupMessages/getMessages?groupId=${this.currentChatId}`;
+      axios.get(url).then(response => {
         if (response.data.success) {
           this.messages = response.data.data;
           this.scrollToBottom();
@@ -158,16 +165,27 @@ export default {
       });
     },
     showEmoji() {
-      this.messages.info("未开放的功能，请拭目以待");
+      this.$Message.info("未开放的功能，请拭目以待");
     },
-    showFile() {
-      this.messages.info("未开放的功能，请拭目以待");
+    linkFile() {
+      this.$Message.info("未开放的功能，请拭目以待");
     },
     handleFriendClick(friendId, friendNickname, avatarUrl) {
-      this.currentFriendName = friendNickname;
-      this.currentFriendAvatar = avatarUrl;
-      this.currentFriendId = friendId;
+      this.currentChatName = friendNickname;
+      this.currentChatAvatar = avatarUrl;
+      this.currentChatId = friendId;
+      this.isFriendChat = true;
       console.log(`Friend with ID ${friendId} clicked.`);
+      this.fetchMessages();
+      clearInterval(this.intervalId); // 清除之前的定时器
+      this.intervalId = setInterval(this.fetchMessages, 10000); // 每10秒刷新一次消息
+    },
+    handleGroupClick(groupId, groupName) {
+      this.currentChatName = groupName;
+      this.currentChatAvatar = ''; // 群组没有头像的情况下设置为空
+      this.currentChatId = groupId;
+      this.isFriendChat = false;
+      console.log(`Group with ID ${groupId} clicked.`);
       this.fetchMessages();
       clearInterval(this.intervalId); // 清除之前的定时器
       this.intervalId = setInterval(this.fetchMessages, 10000); // 每10秒刷新一次消息
@@ -177,6 +195,24 @@ export default {
       axios.get(`/api/scFriends/acceptedFriends?userId=${userId}`).then((response) => {
         if (response.data.success) {
           this.friends = response.data.data;
+          if (this.friends.length > 0 && this.currentChatId === null) {
+            // 默认选择第一个好友
+            const firstFriend = this.friends[0];
+            this.handleFriendClick(firstFriend.friendId, firstFriend.friendNickname, firstFriend.avatarUrl);
+          }
+        }
+      });
+    },
+    fetchGroups() {
+      const userId = this.currentUserId;
+      axios.get(`/api/scGroups/userGroups?userId=${userId}`).then((response) => {
+        if (response.data.success) {
+          this.groups = response.data.data;
+          if (this.groups.length > 0 && this.currentChatId === null) {
+            // 默认选择第一个群组
+            const firstGroup = this.groups[0];
+            this.handleGroupClick(firstGroup.groupId, firstGroup.groupName);
+          }
         }
       });
     },
@@ -195,6 +231,7 @@ export default {
   },
   mounted() {
     this.fetchFriends();
+    this.fetchGroups();
   },
   beforeDestroy() {
     clearInterval(this.intervalId); // 在组件销毁前清除定时器
@@ -335,5 +372,8 @@ export default {
   background-color: #bbbbbb;
   border-radius: 8px;
 }
-
+.group-item:hover {
+  background-color: #bbbbbb;
+  border-radius: 8px;
+}
 </style>

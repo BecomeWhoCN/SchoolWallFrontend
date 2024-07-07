@@ -55,7 +55,7 @@
               :key="message.messageId"
               class="chat-message"
             >
-              <Avatar icon="md-contact" />
+              <Avatar :src="getSenderAvatar(message.senderId)" icon="md-contact" />
               <div class="message-content">
                 <div class="message-user">{{ getMessageUser(message) }}</div>
                 <div style="zoom: 0.7" class="message-time">
@@ -134,10 +134,9 @@ export default {
             const message = {
               messageId: Date.now(), // 用当前时间戳作为临时ID
               senderId: this.currentUserId,
-              receiverId: this.currentChatId,
+              senderName: '我', // 当前用户是发送者
               messageText: this.newMessage,
               messageSentAt: new Date().toLocaleString(), // 这里假设发送时间是当前时间
-              attachmentUrls: []
             };
             this.messages.push(message);
             this.newMessage = "";
@@ -217,11 +216,16 @@ export default {
       });
     },
     getMessageUser(message) {
-      return message.senderId === this.currentUserId ? '我' : this.getFriendNickname(message.senderId);
+      if (message.senderId === this.currentUserId) {
+        return '我';
+      }
+      const friend = this.friends.find(f => f.friendId === message.senderId);
+      return friend ? friend.friendNickname : message.senderName;
     },
-    getFriendNickname(senderId) {
+    getSenderAvatar(senderId) {
+      if (senderId === this.currentUserId) return this.currentChatAvatar;
       const friend = this.friends.find(f => f.friendId === senderId);
-      return friend ? friend.friendNickname : '我';
+      return friend ? friend.avatarUrl : 'https://s1.imagehub.cc/images/2024/07/06/1a05e112ae8dfbd47b415c294facc655.th.png'; // 默认头像
     },
     getCookie(name) {
       const value = `; ${document.cookie}`;

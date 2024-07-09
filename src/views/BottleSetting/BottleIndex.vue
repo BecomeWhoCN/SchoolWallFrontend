@@ -15,6 +15,7 @@
         <h2>{{ currentArticle.title }}</h2>
         <p>{{ currentArticle.content }}</p>
       </div>
+      
       <div class="navigation-buttons">
         <Button @click="prevArticle" type="primary" size="large" :disabled="currentIndex === 0">上一篇</Button>
         <Button @click="nextArticle" type="primary" size="large" :disabled="currentIndex === articles.length - 1">下一篇</Button>

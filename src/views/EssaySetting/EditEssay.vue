@@ -1,5 +1,5 @@
 <template>
-<Header/>
+  <Header/>
   <div class="editor-container">
     <Card class="Card" title="">
       <h1>文章编辑器beta</h1>
@@ -11,7 +11,8 @@
         </Col>
 
         <Col :md="4" :xs="24" style="text-align: center">
-          <Upload :show-upload-list="false" :before-upload="handleUpload">
+          <Upload :show-upload-list="false" 
+                  :before-upload="handleUpload">
             <Button type="info" icon="ios-cloud-upload-outline">上传文章头图</Button>
           </Upload>
         </Col>
@@ -24,12 +25,14 @@
         </Col>
       </Row>
 
+      <!-- 反向显示文章 -->
       <div style="height: 600px" ref="vditor" class="vditor"></div>
     
       <div style="margin-top: 15px">
-        <Button style="margin-right: 15px" type="primary">保存草稿</Button>
-        <Button type="success">发布文章</Button>
+        <Button style="margin-right: 15px" type="primary" @click="saveDraft">保存草稿</Button>
+        <Button type="success" @click="releasearticle">发布文章</Button>
       </div>
+
       <Alert style="margin-top: 20px" type="warning">目前此编辑器页面是一个beta版本，其中已知的问题有，图片因为没
         有采用MongeDB数据库存储，而且也懒得做优化导致功能是正常的，图片强制使用bese64方式强
         制压缩导致您添加图片的时候编辑图片可能会出现压缩乱码并不影响使用但是对图片的编辑性较差，
@@ -45,7 +48,8 @@
     </Modal>
 
     <Tooltip style="zoom:0.8;top:100px" class="backhome" content="强制回到上一页" placement="top-start">
-    <Button style="zoom:1.5" @click="modal = true" shape="circle" icon="md-backspace"></Button></Tooltip>
+      <Button style="zoom:1.5" @click="modal = true" shape="circle" icon="md-backspace"></Button>
+    </Tooltip>
   </div>
   <Footer/>
 </template>
@@ -53,8 +57,10 @@
 <script>
 import Vditor from 'vditor';
 import 'vditor/dist/index.css';
-import Header from '@/components/aresources/PageHead.vue'
-import Footer from '@/components/aresources/PageFoot.vue'
+import Header from '@/components/aresources/PageHead.vue';
+import Footer from '@/components/aresources/PageFoot.vue';
+import Cookies from 'js-cookie';
+import axios from 'axios';
 
 export default {
   name: 'ArticleEditor',
@@ -68,12 +74,32 @@ export default {
       modal: false,
       title: '',
       summary: '',
+      imageFile: null,      // 上传的图片文件对象
+      postContentUrl: '', // 文章内容的URL
+      postId: 0,
+      postCreatedAt: '',
+      postUpdatedAt: '',
+      postStatus: '',
+      postHeaderImageUrl: '',
     };
   },
   mounted() {
+    const { postId, postTitle, postSummary, postCreatedAt, postUpdatedAt, postStatus, postContentUrl, postHeaderImageUrl } = this.$route.params;
+    if (postId) {
+      this.postId = postId;
+    }
+    this.title = postTitle;
+    this.summary = postSummary;
+    this.postCreatedAt = postCreatedAt;
+    this.postUpdatedAt = postUpdatedAt;
+    this.postStatus = postStatus;
+    this.postContentUrl = postContentUrl;
+    this.postHeaderImageUrl = postHeaderImageUrl;
+    
     this.vditorInstance = new Vditor(this.$refs.vditor, {
       height: 720,
       width: '100%',
+      value: null,
       toolbarConfig: {
         pin: true,
       },
@@ -93,20 +119,23 @@ export default {
       },
       after: () => {
         console.log('Vditor ready');
-      },
+        if (postContentUrl) {
+          this.loadPostContent(postContentUrl);
+        }
+      }
     });
   },
   methods: {
     handleUpload(file) {
       this.toBase64(file).then((base64) => {
-        const markdownImage = `![${file.name}](data:image/png;base64,${base64})`;
-        this.vditorInstance.insertValue(markdownImage);
+        // 将选择的图片文件存储到imageFile中
+        this.imageFile = file;
       }).catch((error) => {
-        console.error("Base64 conversion error: ", error);
+        console.error("图片转化失败: ", error);
       });
       return false; // 阻止默认的上传行为
     },
-    toBase64(file) {
+    toBase64(file) { 
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -128,48 +157,104 @@ export default {
     },
     no() {
       this.modal = false;
+    },
+    saveDraft() {
+      const userId = Cookies.get('userId');
+      const title = this.title;
+      const summary = this.summary;
+      const editorContent = this.vditorInstance.getValue();
+      const imageFile = this.imageFile;
+      const postContentUrl = this.postContentUrl;
+      const postHeaderImageUrl = this.postHeaderImageUrl;
+      const editorContentBlob = new Blob([editorContent], { type: 'text/markdown' });
+      const formData = new FormData();
+      const postId = this.postId;
+      formData.append('postHeaderImageUrl', postHeaderImageUrl);
+      formData.append('postContentUrl', postContentUrl);
+      formData.append('postId', postId);
+      formData.append('userId', userId);
+      formData.append('postTitle', title);
+      formData.append('postSummary', summary);
+      formData.append('editorContent', editorContentBlob, 'content.md');
+      formData.append('imageFile', imageFile);
+      axios.post('/api/scPosts/saveDraft', formData)
+      .then(response => {
+        if (response.data.success == true) {  
+          this.$Message.success(postId ? '修改草稿保存成功' : '草稿保存成功');
+          this.$router.push('/manage-essay');
+        } else {
+          console.log("出现问题");
+        }
+      })
+      .catch(error => {
+        console.error('操作失败:', error);
+        this.$Message.error('操作失败');
+      });
+    },
+    releasearticle() {
+      const userId = Cookies.get('userId');
+      const title = this.title;
+      const summary = this.summary;
+      const editorContent = this.vditorInstance.getValue();
+      const imageFile = this.imageFile;
+      const postContentUrl = this.postContentUrl;
+      const postHeaderImageUrl = this.postHeaderImageUrl;
+      const editorContentBlob = new Blob([editorContent], { type: 'text/markdown' });
+      const formData = new FormData();
+      const postId = this.postId;
+      formData.append('postHeaderImageUrl', postHeaderImageUrl);
+      formData.append('postContentUrl', postContentUrl);
+      formData.append('postId', postId);
+      formData.append('userId', userId);
+      formData.append('postTitle', title);
+      formData.append('postSummary', summary);
+      formData.append('editorContent', editorContentBlob, 'content.md');
+      formData.append('imageFile', imageFile);
+      axios.post('/api/scPosts/saveArticle', formData)
+      .then(response => {
+        if (response.data.success == true) {  
+          this.$Message.success(postId ? '修改文章发布成功' : '文章发布成功');
+          this.$router.push('/manage-essay');
+        } else {
+          console.log("出现问题");
+        }
+      })
+      .catch(error => {
+        console.error('操作失败:', error);
+        this.$Message.error('操作失败');
+      });
+    },
+    loadPostContent(dataUrl) {
+      axios.get(dataUrl)
+        .then(response => {
+          console.log(response.data + '看俺');
+          this.vditorInstance.setValue(response.data);
+        })
+        .catch(error => {
+          console.error('文档获取失败', error);
+        });
     }
   }
 };
 </script>
 
-<style>
-.Card {
-    max-width: 1200px;
-    width: 100%;
-    height: 96vh;
+<style scoped>
+.backhome{
+  position: fixed;
+  left: 20px;
 }
-
 .editor-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  padding: 20px;
 }
-
+.Card {
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 .vditor {
-  max-width: 1200px;
-  width: 100%;
-  margin-top: 10px;
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 120px;
-}
-
-.backhome {
-  position: absolute;
-  top: 40px;
-  left: 40px;
-  border-width: 2px;
-  zoom: 110%;
-}
-
-div>span {
-    font-weight: 600;
-}
-
-Col {
-    margin-bottom: 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
 }
 </style>

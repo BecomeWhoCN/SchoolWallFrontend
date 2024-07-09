@@ -1,28 +1,23 @@
 <template>
+  <Hearder />
   <div class="article-container">
-    <div class="header">
-      <h2><span style="color: #ff0000;">| </span>最新的文章</h2>
-
-      <Tooltip content="查看所有文章" placement="bottom">
-        <Button @click="goMorePage">查看更多 <Icon type="ios-arrow-dropright-circle" /></Button>
-      </Tooltip>
-    </div>
-
     <Row :gutter="20">
-      <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="article in articles" :key="article.postId">
+      <Col :xs="24" :sm="24" :md="12" :lg="8" v-for="article in paginatedArticles" :key="article.postId">
         <Card class="article-card">
           <img :src="article.imageURL" class="article-image" />
           <h3>{{ article.title }}</h3>
           <p>{{ article.summary }}</p>
           <div class="article-info">
-            <Tooltip content="创造者" placement="bottom-start">
+            <Tooltip content="发布者" placement="bottom-start">
               <span>
-                <img style="zoom:80%" v-if="article.authorAvatar" :src="article.authorAvatarURL" class="author-avatar" />
-                <Icon v-else class="pageIcon" type="md-contact" /> <span style="margin-top: -3px">{{ article.author }}</span>
+                <img style="zoom:80%" v-if="article.authorAvatarURL" :src="article.authorAvatarURL" class="author-avatar" />
+                <Icon v-else class="pageIcon" type="md-contact" />
+                <span style="margin-top: -3px">{{ article.author }}</span>
               </span>
+              <Tag color="success">官方认证</Tag>
             </Tooltip>
 
-            <Tooltip content="创建时间" placement="bottom-start">
+            <Tooltip content="发布时间" placement="bottom-start">
               <span><Icon class="pageIcon" type="md-clock" /> {{ article.date }}</span>
             </Tooltip>
           </div>
@@ -36,27 +31,32 @@
             </Tooltip>
 
             <Tooltip content="举报文章内容" placement="bottom-start">
-              <Button style="zoom:80%" type="error" shape="circle" icon="md-help" @click="openModal(article.postId)"></Button>
+              <Button type="error" style="zoom:80%" shape="circle" icon="md-help" @click="openModal(article.postId)"></Button>
             </Tooltip>
           </div>
         </Card>
       </Col>
     </Row>
 
+    <Page :total="total" :page-size="pageSize" @on-change="handlePageChange" />
+
     <Modal v-model="modal" title="举报此文章" :loading="loading" @on-ok="asyncOK">
-        <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
-        <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
+      <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
+      <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
     </Modal>
   </div>
+  <Footer />
 </template>
 
 <script>
 import axios from 'axios';
-import { Row, Col, Card, Button, Icon, Tooltip, Modal, Input } from 'view-ui-plus';
+import { Row, Col, Card, Button, Icon, Tooltip, Tag, Page, Modal, Input } from 'view-ui-plus';
 import Cookies from "js-cookie";
+import Hearder from '@/components/aresources/PageHead.vue';
+import Footer from '@/components/aresources/PageFoot.vue';
 
 export default {
-  name: 'IndexPage',
+  name: 'ArticlePage',
   components: {
     Row,
     Col,
@@ -64,55 +64,68 @@ export default {
     Button,
     Icon,
     Tooltip,
+    Tag,
+    Page,
     Modal,
-    Input
+    Input,
+    Hearder,
+    Footer
   },
   data() {
     return {
       articles: [],
+      paginatedArticles: [],
+      total: 0,
+      pageSize: 6,
+      currentPage: 1,
       modal: false,
       loading: false,
       value2: '',
-      currentPostId: null // 增加存储当前被举报文章的 id
+      currentPostId: null
     };
   },
   created() {
-    this.fetchArticlesData();
+    this.fetchArticles(this.currentPage);
   },
   methods: {
-    fetchArticlesData() {
-      axios.get('/api/scPosts/queryArticlesData') 
+    fetchArticles() {
+      axios.get('/api/scPosts/queryAllArticles')
         .then(response => {
-          this.articles = response.data.data.data;
-          console.log(response.data.data.data);
+          this.articles = response.data.data.articles; // 更新为新API返回的数据结构
+          this.total = response.data.data.total;
+          this.paginateArticles();
         })
         .catch(error => {
           console.error('获取文章数据失败:', error);
         });
     },
-    goMorePage() {
-      this.$router.push('/more');
+    paginateArticles() {
+      const startIndex = (this.currentPage - 1) * this.pageSize;
+      this.paginatedArticles = this.articles.slice(startIndex, startIndex + this.pageSize);
+    },
+    handlePageChange(page) {
+      this.currentPage = page;
+      this.paginateArticles(); // 直接分页显示文章
     },
     openModal(postId) {
-      this.currentPostId = postId; // 存储当前被举报文章的 id
+      this.currentPostId = postId;
       this.modal = true;
     },
-    asyncOK(){
+    asyncOK() {
       const userId = Cookies.get('userId');
       this.loading = true;
       axios.post('/api/scReports/addReportedData', {
         userId: userId,
-        postId: this.currentPostId, // 使用存储的 id
+        postId: this.currentPostId,
         value: this.value2,
       })
       .then(response => {
         this.loading = false;
-        if (response.data.success ) {
+        if (response.data.success) {
           this.$Message.success('操作成功我们正在核实');
           this.modal = false;
           this.value2 = '';
         } else {
-          console.log(response.data.success)
           this.$Message.error('操作失败，请重试');
         }
       })
@@ -124,7 +137,6 @@ export default {
     }
   }
 };
-
 </script>
 
 <style scoped>
@@ -133,7 +145,7 @@ export default {
 }
 
 .article-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -159,18 +171,6 @@ export default {
   margin: 10px 0;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  margin-top: 10px;
-}
-
-h2 {
-  font-size: 27px;
-}
-
 .pageIcon {
   zoom: 120%;
 }
@@ -181,5 +181,4 @@ h2 {
   border-radius: 50%;
   margin-right: 5px;
 }
-
 </style>

@@ -8,12 +8,14 @@ import ManageEssay from '@/views/EssaySetting/ManageEssay.vue'
 import EditBottle from '@/views/BottleSetting/EditBottle.vue'
 import ManageBottle from '@/views/BottleSetting/ManageBottle.vue'
 import BottleIndex from '@/views/BottleSetting/BottleIndex.vue'
+import ManageView from '@/views/Manage/ManageView.vue'
+import MorePageView from '@/views/More/MorePages.vue'
+import MoreNewsView from '@/views/More/MoreNews.vue'
 
-
-const apiAddress = 'http://192.168.12.225:8081/';
+const apiAddress = 'http://192.168.12.240:8081/';
 export { apiAddress };
 const routes = [
-  {
+  { 
     path: '/',
     name: 'indexView',
     component: indexView
@@ -49,6 +51,18 @@ const routes = [
     path: '/bottle-index',
     name: 'bottle-index',
     component: BottleIndex
+  },{
+    path: '/manage-view',
+    name: '/manage-view',
+    component: ManageView
+  },{
+    path: '/more',
+    name: 'more',
+    component: MorePageView
+  },{
+    path: '/news',
+    name: 'news',
+    component: MoreNewsView
   }
 ]
 

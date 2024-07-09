@@ -13,7 +13,11 @@ import MorePageView from '@/views/More/MorePages.vue'
 import MoreNewsView from '@/views/More/MoreNews.vue'
 import test from '@/components/aresources/EssayPreview.vue'
 
-const apiAddress = 'http://192.168.12.240:8081/';
+
+import MyGroup from '@/views/Group/MyGroup.vue'
+
+
+const apiAddress = 'http://192.168.12.225:8081/';
 export { apiAddress };
 const routes = [
   { 
@@ -68,6 +72,10 @@ const routes = [
     path: '/news',
     name: 'news',
     component: MoreNewsView
+  },{
+    path: '/my-group',
+    name: 'my-group',
+    component: MyGroup
   }
 ]
 

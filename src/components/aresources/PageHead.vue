@@ -176,12 +176,13 @@ export default {
   },
   data() {
     return {
-      user: {},
+      user: null,
       drawerVisible: false,
       userAvatar: "/path/to/default/avatar.png", // 默认头像路径
       deactivationConfirmVisible: false,
       passwordModalVisible: false,
       password: "",
+      userRole:"User",
     };
   },
   computed: {
@@ -205,6 +206,18 @@ export default {
           userRole,
         };
       }
+    },
+    admin() {
+      return this.user.userRole === "Admin"? true: false;
+    },
+    showDrawer() {
+      this.drawerVisible = true;
+    },
+    hideDrawer() {
+      this.drawerVisible = false;
+    },
+    showPasswordModal() {
+      this.passwordModalVisible = true;
     },
     fetchUserData() {
       const userId = Cookies.get("userId");
@@ -270,6 +283,7 @@ export default {
       } else if (name === "5-4") {
         this.confirmDeactivation();
       } else if (name === "6-1") {
+        this.$Message.info("此功能还未完善，等待后续开发");
         this.$router.push("/manage-view");
       }
       },

@@ -23,7 +23,7 @@
       <div style="height: 600px" ref="vditor" class="vditor"></div>
     
       <div style="margin-top: 15px">
-        <Button type="success">发布漂流瓶</Button>
+        <Button type="success" @click="publishBottle">发布漂流瓶</Button>
       </div>
       <Alert style="margin-top: 20px" type="warning">目前此编辑器页面是一个beta版本，其中已知的问题有，图片因为没
         有采用MongeDB数据库存储，而且也懒得做优化导致功能是正常的，图片强制使用bese64方式强
@@ -51,6 +51,8 @@ import Vditor from 'vditor';
 import 'vditor/dist/index.css';
 import Headers from '@/components/aresources/PageHead.vue'
 import Footers from '@/components/aresources/PageFoot.vue'
+import axios from 'axios';
+
 
 export default {
   name: 'ArticleEditor',
@@ -62,6 +64,10 @@ export default {
       vditorInstance: null,
       modal: false,
       title: '',
+      headerImageUrl:'',
+      user_id: null,// 用户ID
+      user_gender: '',// 用户性别
+      contentFile :null //文章内容文件
     };
   },
   mounted() {
@@ -89,10 +95,38 @@ export default {
         console.log('Vditor ready');
       },
     });
+
+    // 获取用户信息
+    this.getUserInfo();
   },
   methods: {
+    // 获取用户信息
+    getUserInfo(){
+      const userId = this.getCookie('userId');
+      axios.get(`/api/scUsers/get_scuserbyid/${userId}`)
+        .then(response => {
+          this.user_id = response.data.data.userId;
+          this.user_gender = response.data.data.userGender;
+          console.log(response);
+          // console.log(this.user_id);
+          // console.log(this.user_gender)
+        })
+        .catch(error => {
+          console.error('获取用户信息失败：',error);
+        })
+    },
+    // 获取对应的cookie值
+    getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    },
+
+  
+
     handleUpload(file) {
       this.toBase64(file).then((base64) => {
+        this.headerImageUrl = `data:image/png;base64,${base64}`;
         const markdownImage = `![${file.name}](data:image/png;base64,${base64})`;
         this.vditorInstance.insertValue(markdownImage);
       }).catch((error) => {
@@ -122,9 +156,37 @@ export default {
     },
     no() {
       this.modal = false;
+    },
+    async publishBottle() {   // 从编辑器获取内容组装成一个对象bottleData
+      const content = this.vditorInstance.getValue();
+      console.log("content:" + content);
+      const fileName = `bottleContent_${Date.now()}.md`;
+      const formData = new FormData();
+      formData.append('file', new Blob([content], { type: 'text/markdown' }), fileName);
+      formData.append('user_id', this.user_id);
+      formData.append('user_gender', this.user_gender);
+      formData.append('bottle_title', this.title);
+      formData.append('bottle_created_at', new Date().toISOString());
+     
+
+
+      await axios.post('api/scDriftBottles/create_scDriftBottles', formData,{
+        headers: {
+          'Content-Type' : 'multipart/form-data'
+        }
+      })
+        .then(response => {
+          this.$Message.success('漂流瓶发布成功');
+          this.$router.push('/bottle-index');
+        })
+        .catch(error => {
+          console.error('漂流瓶发布失败:', error);
+          this.$Message.error('漂流瓶发布失败');
+        });
     }
+
   }
-};
+}
 </script>
 
 <style>

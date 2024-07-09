@@ -11,7 +11,7 @@ import BottleIndex from '@/views/BottleSetting/BottleIndex.vue'
 import test from '@/components/aresources/EssayPreview.vue'
 
 
-const apiAddress = 'http://192.168.12.248:8081/';
+const apiAddress = 'http://192.168.12.225:8081/';
 export { apiAddress };
 const routes = [
   {

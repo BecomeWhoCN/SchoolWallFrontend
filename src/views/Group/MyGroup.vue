@@ -92,6 +92,7 @@
       </Row>
     </div>
   </div>
+  <SearchDialogVue />
   <Footers />
 </template>
 
@@ -99,13 +100,14 @@
 import axios from 'axios';
 import Headers from "@/components/aresources/PageHead.vue";
 import Footers from "@/components/aresources/PageFoot.vue";
+import SearchDialogVue from '@/components/GroupsCom/SearchDialog.vue';
 import MessageCall from "@/components/GroupsCom/MessageCall.vue";
 import FriendSetting from "@/components/GroupsCom/FriendSetting.vue";
 
 import {Row,Col,Avatar,Tabs,TabPane,Icon,Button,Tooltip} from "view-ui-plus";
 
 export default {
-  components: {Row,Col,Avatar,Tabs,TabPane,Icon,Button,Tooltip,Footers,Headers,MessageCall,FriendSetting},
+  components: {SearchDialogVue,Row,Col,Avatar,Tabs,TabPane,Icon,Button,Tooltip,Footers,Headers,MessageCall,FriendSetting},
   data() {
     return {
       friends: [],

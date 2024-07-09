@@ -9,10 +9,10 @@
     </div>
 
     <Row :gutter="20">
-      <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="article in articles" :key="article.id">
+      <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="article in articles" :key="article.id" :id="`article-${article.id}`">
         <Card class="article-card">
           <img :src="article.image" class="article-image" />
-          <h3>{{ article.title }}</h3>
+          <h3 @click="showPreview(article.id)">{{ article.title }}</h3>
           <p>{{ article.content }}</p>
           <div class="article-info">
             <Tooltip content="创造者" placement="bottom-start">
@@ -43,10 +43,17 @@
       </Col>
     </Row>
   </div>
+
+  
+  <div class="index-page">
+    <EssayPreview :id="selectedId" :show.sync="showPreviewModal" v-if="showPreviewModal"/>
+  </div>
+  
 </template>
 
 <script>
 import { Row, Col, Card, Button, Icon, Tooltip } from 'view-ui-plus';
+import EssayPreview from '@/components/aresources/EssayPreview.vue';
 
 export default {
   name: 'IndexPage',
@@ -56,7 +63,8 @@ export default {
     Card,
     Button,
     Icon,
-    Tooltip
+    Tooltip,
+    EssayPreview
   },
   data() {
     return {
@@ -84,10 +92,16 @@ export default {
           likes: 30
         }
         // Add more articles as needed
-      ]
+      ],
+      selectedId: null,
+      showPreviewModal: false
     };
   },
   methods: {
+    showPreview(id) {
+      this.selectedId = id;
+      this.showPreviewModal = true;
+    },
     goMorePage() {
       this.$router.push('/more');
     },

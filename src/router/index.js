@@ -10,7 +10,7 @@ import ManageBottle from '@/views/BottleSetting/ManageBottle.vue'
 import BottleIndex from '@/views/BottleSetting/BottleIndex.vue'
 
 
-const apiAddress = 'http://192.168.12.225:8081/';
+const apiAddress = 'http://192.168.12.211:8081/';
 export { apiAddress };
 const routes = [
   {

@@ -9,15 +9,15 @@
     </div>
 
     <Row :gutter="20">
-      <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="article in articles" :key="article.id" :id="`article-${article.id}`">
+      <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="article in articles" :key="article.postId">
         <Card class="article-card">
-          <img :src="article.image" class="article-image" />
-          <h3 @click="showPreview(article.id)">{{ article.title }}</h3>
-          <p>{{ article.content }}</p>
+          <img :src="article.imageURL" class="article-image" />
+          <h3>{{ article.title }}</h3>
+          <p>{{ article.summary }}</p>
           <div class="article-info">
             <Tooltip content="创造者" placement="bottom-start">
               <span>
-                <img style="zoom:80%" v-if="article.authorAvatar" :src="article.authorAvatar" class="author-avatar" />
+                <img style="zoom:80%" v-if="article.authorAvatar" :src="article.authorAvatarURL" class="author-avatar" />
                 <Icon v-else class="pageIcon" type="md-contact" /> <span style="margin-top: -3px">{{ article.author }}</span>
               </span>
             </Tooltip>
@@ -36,24 +36,24 @@
             </Tooltip>
 
             <Tooltip content="举报文章内容" placement="bottom-start">
-              <Button style="zoom:80%" type="error" shape="circle" icon="md-help" @click="reportArticle(article.id)"></Button>
+              <Button style="zoom:80%" type="error" shape="circle" icon="md-help" @click="openModal(article.postId)"></Button>
             </Tooltip>
           </div>
         </Card>
       </Col>
     </Row>
-  </div>
 
-  
-  <div class="index-page">
-    <EssayPreview :id="selectedId" :show.sync="showPreviewModal" v-if="showPreviewModal"/>
+    <Modal v-model="modal" title="举报此文章" :loading="loading" @on-ok="asyncOK">
+        <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
+        <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
+    </Modal>
   </div>
-  
 </template>
 
 <script>
-import { Row, Col, Card, Button, Icon, Tooltip } from 'view-ui-plus';
-import EssayPreview from '@/components/aresources/EssayPreview.vue';
+import axios from 'axios';
+import { Row, Col, Card, Button, Icon, Tooltip, Modal, Input } from 'view-ui-plus';
+import Cookies from "js-cookie";
 
 export default {
   name: 'IndexPage',
@@ -64,53 +64,67 @@ export default {
     Button,
     Icon,
     Tooltip,
-    EssayPreview
+    Modal,
+    Input
   },
   data() {
     return {
-      articles: [
-        {
-          id: 1,
-          image: 'https://www.wetools.com/imgplaceholder/400x180',
-          title: 'Article 1',
-          content: 'This is the content of article 1.',
-          author: 'Author 1',
-          authorAvatar: '', // 假设没有头像
-          date: '2024-06-30',
-          comments: 5,
-          likes: 20
-        },
-        {
-          id: 2,
-          image: 'https://www.wetools.com/imgplaceholder/400x180',
-          title: 'Article 2',
-          content: 'This is the content of article 2.',
-          author: 'Author 2',
-          authorAvatar: 'assets/aresources/logo/logo_brown_bear.png', // 假设有头像
-          date: '2024-06-29',
-          comments: 8,
-          likes: 30
-        }
-        // Add more articles as needed
-      ],
-      selectedId: null,
-      showPreviewModal: false
+      articles: [],
+      modal: false,
+      loading: false,
+      value2: '',
+      currentPostId: null // 增加存储当前被举报文章的 id
     };
   },
+  created() {
+    this.fetchArticlesData();
+  },
   methods: {
-    showPreview(id) {
-      this.selectedId = id;
-      this.showPreviewModal = true;
+    fetchArticlesData() {
+      axios.get('/api/scPosts/queryArticlesData') 
+        .then(response => {
+          this.articles = response.data.data.data;
+          console.log(response.data.data.data);
+        })
+        .catch(error => {
+          console.error('获取文章数据失败:', error);
+        });
     },
     goMorePage() {
       this.$router.push('/more');
     },
-    reportArticle(id) {
-      // Implement your report functionality here
-      alert(`Article ${id} has been reported.`);
+    openModal(postId) {
+      this.currentPostId = postId; // 存储当前被举报文章的 id
+      this.modal = true;
+    },
+    asyncOK(){
+      const userId = Cookies.get('userId');
+      this.loading = true;
+      axios.post('/api/scReports/addReportedData', {
+        userId: userId,
+        postId: this.currentPostId, // 使用存储的 id
+        value: this.value2,
+      })
+      .then(response => {
+        this.loading = false;
+        if (response.data.success ) {
+          this.$Message.success('操作成功我们正在核实');
+          this.modal = false;
+          this.value2 = '';
+        } else {
+          console.log(response.data.success)
+          this.$Message.error('操作失败，请重试');
+        }
+      })
+      .catch(error => {
+        this.loading = false;
+        console.error('请求失败:', error);
+        this.$Message.error('请求失败，请重试');
+      });
     }
   }
 };
+
 </script>
 
 <style scoped>
@@ -149,8 +163,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  margin-top: 40px;
+  margin-bottom: 20px;
+  margin-top: 10px;
 }
 
 h2 {
@@ -167,4 +181,5 @@ h2 {
   border-radius: 50%;
   margin-right: 5px;
 }
+
 </style>

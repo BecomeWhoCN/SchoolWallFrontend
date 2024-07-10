@@ -17,7 +17,7 @@ import test from '@/components/aresources/EssayPreview.vue'
 import MyGroup from '@/views/Group/MyGroup.vue'
 
 
-const apiAddress = 'http://192.168.12.225:8081/';
+const apiAddress = 'http://192.168.12.240:8081/';
 export { apiAddress };
 const routes = [
   { 

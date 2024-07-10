@@ -4,6 +4,7 @@
       <Row :gutter="20">
         <Col :xs="24" :sm="24" :md="12" :lg="8" v-for="news in paginatedNews" :key="news.postId">
           <Card class="news-card">
+            <router-link :to="`/test?postId=${news.postId}`">
             <img :src="news.imageURL" class="news-image" />
             <h3>{{ news.title }}</h3>
             <p>{{ news.summary }}</p>
@@ -13,6 +14,7 @@
                   <img style="zoom:80%" v-if="news.authorAvatarURL" :src="news.authorAvatarURL" class="author-avatar" />
                   <Icon v-else class="pageIcon" type="md-contact" />
                   <span style="margin-top: -3px">{{ news.author }}</span>
+                   <Tag color="success">官方认证</Tag>
                 </span>
                 
               </Tooltip>
@@ -34,6 +36,7 @@
                 <Button type="error" style="zoom:80%" shape="circle" icon="md-help" @click="openModal(news.postId)"></Button>
               </Tooltip>
             </div>
+            </router-link>
           </Card>
         </Col>
       </Row>
@@ -181,5 +184,14 @@
     border-radius: 50%;
     margin-right: 5px;
   }
+
+  
+a {
+  color: black;
+}
+
+a:hove {
+  color: black;
+}
   </style>
   

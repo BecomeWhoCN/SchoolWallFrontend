@@ -43,7 +43,7 @@
         <h2>被举报漂流瓶管理</h2>
         <Table :columns="messageColumns" :data="messageData">
           <template #action="{ row }">
-            <Button type="primary" size="small" @click="viewMessageDetail(row.bottleId)">详情</Button>
+            <Button type="primary" size="small" @click="viewDetails(row.bottleId)">详情</Button>
             <Button type="success" size="small" @click="republishMessage(row.bottleId)">重新发布</Button>
             <Button type="error" size="small" @click="deleteMessage(row.bottleId)">删除</Button>
           </template>
@@ -54,8 +54,19 @@
           @onChange="handleMessagePageChange" 
           class="custom-page"
         />
-        
       </div>
+      
+      <Modal
+        v-model="detailsModalVisible"
+        title="漂流瓶详情"
+        @on-ok="handleModalOk"
+        @on-cancel="handleModalCancel"
+        :closable="false"
+        :mask-closable="false"
+      >
+        <h3>{{ modalData.bottleTitle }}</h3>
+        <div style="padding: 25px; padding-left: 40px" class="content-container" id="vditor"></div>
+      </Modal>
     </div>
     <Footer />
   </div>
@@ -63,10 +74,12 @@
 
 <script>
 import { defineComponent, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import Header from '@/components/aresources/PageHead.vue';
 import Footer from '@/components/aresources/PageFoot.vue';
-import { Table, Page, Button, Message } from 'view-ui-plus';
+import { Table, Page, Button, Message, Modal } from 'view-ui-plus';
 import axios from 'axios';
+import Vditor from 'vditor';
 
 export default defineComponent({
   components: {
@@ -74,9 +87,11 @@ export default defineComponent({
     Footer,
     Table,
     Page,
-    Button
+    Button,
+    Modal
   },
   setup() {
+    const router = useRouter();
     const pageSize = 5;
 
     // 表格数据和列定义
@@ -97,7 +112,6 @@ export default defineComponent({
       { title: '文章编号', key: 'postId' },
       { title: '作者', key: 'userName' },
       { title: '被举报文章名称', key: 'postTitle' },
-      
       {
         title: '操作',
         key: 'action',
@@ -120,6 +134,12 @@ export default defineComponent({
     const messageData = ref([]);
     const messageTotal = ref(0);
 
+    const detailsModalVisible = ref(false);
+    const modalData = ref({
+      bottleTitle: '',
+      bottleContent: ''
+    });
+
     // 获取用户数据
     const fetchUserData = (page) => {
       axios.post('/api/scUsers/queryAllUser', { page, pageSize })
@@ -134,7 +154,7 @@ export default defineComponent({
 
     // 获取举报文章数据
     const fetchArticleData = (page) => {
-      axios.post('api/scPosts/queryAllReportedPosts', { page, pageSize })
+      axios.post('/api/scPosts/queryAllReportedPosts', { page, pageSize })
         .then(response => {
           articleData.value = response.data.data.articles; // 确保数据路径正确
           articleTotal.value = response.data.data.total;
@@ -197,7 +217,7 @@ export default defineComponent({
 
     const viewArticleDetail = (postId) => {
       console.log('查看文章详情', postId);
-      // 跳转到文章详情页面
+      router.push(`/test?postId=${postId}`);
     };
 
     const sendToDraft = (postId) => {
@@ -248,12 +268,36 @@ export default defineComponent({
         });
     };
 
-    const viewMessageDetail = (bottleId) => {
-      console.log('查看漂流瓶详情', bottleId);
-      // 跳转到漂流瓶详情页面
+    const viewDetails = async (bottleId) => {
+      try {
+        const response = await axios.get(`/api/scDriftBottles/details/${bottleId}`);
+        if (response.data.success) {
+          modalData.value.bottleTitle = response.data.data.bottle_title;
+
+          const contentResponse = await axios.get(response.data.data.bottle_content_url);
+          modalData.value.bottleContent = contentResponse.data;
+
+          detailsModalVisible.value = true;
+          loadArticleContent(response.data.data);
+        } else {
+          Message.error('获取漂流瓶详情失败');
+        }
+      } catch (error) {
+        console.error('获取漂流瓶详情请求失败:', error);
+        Message.error('获取漂流瓶详情请求失败');
+      }
     };
 
-    
+    const loadArticleContent = async (article) => {
+      try {
+        const response = await axios.get(article.bottle_content_url);
+        Vditor.preview(document.getElementById('vditor'), response.data, {
+          theme: 'dark'
+        });
+      } catch (error) {
+        console.error('加载Markdown内容失败:', error);
+      }
+    };
 
     const republishMessage = (bottleId) => {
       axios.post('/api/scDriftBottles/republish', { bottleId })
@@ -287,6 +331,14 @@ export default defineComponent({
         });
     };
 
+    const handleModalOk = () => {
+      detailsModalVisible.value = false;
+    };
+
+    const handleModalCancel = () => {
+      detailsModalVisible.value = false;
+    };
+
     // 组件挂载时获取初始数据
     onMounted(() => {
       fetchUserData(1);
@@ -314,9 +366,13 @@ export default defineComponent({
       sendToDraft,
       republishArticle,
       deleteArticle,
-      viewMessageDetail,
+      viewDetails,
       republishMessage,
-      deleteMessage
+      deleteMessage,
+      detailsModalVisible,
+      modalData,
+      handleModalOk,
+      handleModalCancel
     };
   }
 });

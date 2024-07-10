@@ -11,41 +11,43 @@
     <Row :gutter="20">
       <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="article in articles" :key="article.postId">
         <Card class="article-card">
-          <img :src="article.imageURL" class="article-image" />
-          <h3>{{ article.title }}</h3>
-          <p>{{ article.summary }}</p>
-          <div class="article-info">
-            <Tooltip content="创造者" placement="bottom-start">
-              <span>
-                <img style="zoom:80%" v-if="article.authorAvatar" :src="article.authorAvatarURL" class="author-avatar" />
-                <Icon v-else class="pageIcon" type="md-contact" /> <span style="margin-top: -3px">{{ article.author }}</span>
-              </span>
-            </Tooltip>
+          <router-link :to="`/test?postId=${article.postId}`">
+            <img :src="article.imageURL" class="article-image" />
+            <h3>{{ article.title }}</h3>
+            <p>{{ article.summary }}</p>
+            <div class="article-info">
+              <Tooltip content="创造者" placement="bottom-start">
+                <span>
+                  <img style="zoom:80%" v-if="article.authorAvatar" :src="article.authorAvatarURL" class="author-avatar" />
+                  <Icon v-else class="pageIcon" type="md-contact" /> <span style="margin-top: -3px">{{ article.author }}</span>
+                </span>
+              </Tooltip>
 
-            <Tooltip content="创建时间" placement="bottom-start">
-              <span><Icon class="pageIcon" type="md-clock" /> {{ article.date }}</span>
-            </Tooltip>
-          </div>
-          <div class="article-stats">
-            <Tooltip content="评论数" placement="bottom-start">
-              <span><Icon class="pageIcon" type="md-chatboxes" /> {{ article.comments }}</span>
-            </Tooltip>
+              <Tooltip content="创建时间" placement="bottom-start">
+                <span><Icon class="pageIcon" type="md-clock" /> {{ article.date }}</span>
+              </Tooltip>
+            </div>
+            <div class="article-stats">
+              <Tooltip content="评论数" placement="bottom-start">
+                <span><Icon class="pageIcon" type="md-chatboxes" /> {{ article.comments }}</span>
+              </Tooltip>
 
-            <Tooltip content="获赞数" placement="bottom-start">
-              <span><Icon class="pageIcon" type="ios-heart" /> {{ article.likes }}</span>
-            </Tooltip>
+              <Tooltip content="获赞数" placement="bottom-start">
+                <span><Icon class="pageIcon" type="ios-heart" /> {{ article.likes }}</span>
+              </Tooltip>
 
-            <Tooltip content="举报文章内容" placement="bottom-start">
-              <Button style="zoom:80%" type="error" shape="circle" icon="md-help" @click="openModal(article.postId)"></Button>
-            </Tooltip>
-          </div>
+              <Tooltip content="举报文章内容" placement="bottom-start">
+                <Button style="zoom:80%" type="error" shape="circle" icon="md-help" @click="openModal(article.postId)"></Button>
+              </Tooltip>
+            </div>
+          </router-link>
         </Card>
       </Col>
     </Row>
 
     <Modal v-model="modal" title="举报此文章" :loading="loading" @on-ok="asyncOK">
-        <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
-        <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
+      <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
+      <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
     </Modal>
   </div>
 </template>
@@ -124,7 +126,6 @@ export default {
     }
   }
 };
-
 </script>
 
 <style scoped>
@@ -182,4 +183,11 @@ h2 {
   margin-right: 5px;
 }
 
+a {
+  color: black;
+}
+
+a:hove {
+  color: black;
+}
 </style>

@@ -11,49 +11,52 @@
     <Row :gutter="20">
       <Col :xs="24" :sm="24" :md="12" :lg="12" v-for="news in newsList" :key="news.postId">
         <Card class="news-card">
-          <img :src="news.imageURL" class="news-image" />
-          <h3>{{ news.title }}</h3>
-          <p>{{ news.summary }}</p>
-          <div class="news-info">
-            <Tooltip content="发布者" placement="bottom-start">
-              <span>
-                <img style="zoom:80%" v-if="news.authorAvatarURL" :src="news.authorAvatarURL" class="author-avatar" />
-                <Icon v-else class="pageIcon" type="md-contact" /> 
-                <span style="margin-top: -3px">{{ news.author }}</span>
-              </span> 
-              <Tag color="success">官方认证</Tag>
-            </Tooltip>
+          <router-link :to="`/test?postId=${news.postId}`">
+            <img :src="news.imageURL" class="news-image" />
+            <h3>{{ news.title }}</h3>
+            <p>{{ news.summary }}</p>
+            <div class="news-info">
+              <Tooltip content="发布者" placement="bottom-start">
+                <span>
+                  <img style="zoom:80%" v-if="news.authorAvatarURL" :src="news.authorAvatarURL" class="author-avatar" />
+                  <Icon v-else class="pageIcon" type="md-contact" /> 
+                  <span style="margin-top: -3px">{{ news.author }}</span>
+                </span> 
+                <Tag color="success">官方认证</Tag>
+              </Tooltip>
 
-            <Tooltip content="发布时间" placement="bottom-start">
-              <span><Icon class="pageIcon" type="md-clock" /> {{ news.date }}</span>
-            </Tooltip>
-          </div>
-          <div class="news-stats">
-            <Tooltip content="评论数" placement="bottom-start">
-              <span><Icon class="pageIcon" type="md-chatboxes" /> {{ news.comments }}</span>
-            </Tooltip>
+              <Tooltip content="发布时间" placement="bottom-start">
+                <span><Icon class="pageIcon" type="md-clock" /> {{ news.date }}</span>
+              </Tooltip>
+            </div>
+            <div class="news-stats">
+              <Tooltip content="评论数" placement="bottom-start">
+                <span><Icon class="pageIcon" type="md-chatboxes" /> {{ news.comments }}</span>
+              </Tooltip>
 
-            <Tooltip content="获赞数" placement="bottom-start">
-              <span><Icon class="pageIcon" type="ios-heart" /> {{ news.likes }}</span>
-            </Tooltip>
+              <Tooltip content="获赞数" placement="bottom-start">
+                <span><Icon class="pageIcon" type="ios-heart" /> {{ news.likes }}</span>
+              </Tooltip>
 
-            <Tooltip content="举报新闻内容" placement="bottom-start">
-              <Button type="error" style="zoom:80%" shape="circle" icon="md-help" @click="openModal(news.postId)"></Button>
-            </Tooltip>
-          </div>
+              <Tooltip content="举报新闻内容" placement="bottom-start">
+                <Button type="error" style="zoom:80%" shape="circle" icon="md-help" @click="openModal(news.postId)"></Button>
+              </Tooltip>
+            </div>
+          </router-link>
         </Card>
       </Col>
     </Row>
-  </div>
-  <Modal v-model="modal" title="举报此文章" :loading="loading" @on-ok="asyncOK">
-        <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
-        <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
+    
+    <Modal v-model="modal" title="举报此文章" :loading="loading" @on-ok="asyncOK">
+      <p>你正在举报此文章，请勿恶意举报，请在下面填写举报原因(不要超过50字)</p>
+      <Input class="why" v-model="value2" maxlength="50" show-word-limit type="textarea" placeholder="举报原因" style="width: 455px" />
     </Modal>
+  </div>
 </template>
 
 <script>
 import axios from 'axios';
-import { Row, Col, Card, Button, Icon, Tooltip, Tag } from 'view-ui-plus';
+import { Row, Col, Card, Button, Icon, Tooltip, Tag, Modal, Input } from 'view-ui-plus';
 import Cookies from "js-cookie";
 
 export default {
@@ -65,7 +68,9 @@ export default {
     Button,
     Icon,
     Tooltip,
-    Tag
+    Tag,
+    Modal,
+    Input
   },
   data() {
     return {
@@ -118,7 +123,6 @@ export default {
       })
       .catch(error => {
         this.loading = false;
-        console.log(response.data.success)
         console.error('请求失败:', error);
         this.$Message.error('请求失败，请重试');
       });
@@ -183,4 +187,11 @@ h2 {
   margin-right: 5px;
 }
 
+a {
+  color: black;
+}
+
+a:hove {
+  color: black;
+}
 </style>

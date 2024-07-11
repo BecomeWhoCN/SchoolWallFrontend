@@ -6,7 +6,7 @@
         <!-- Chat Sidebar -->
         <Col span="6" class="chat-sidebar">
           <div class="user-info">
-            <Avatar size="large" icon="md-contact" />
+            <Avatar :src="currentUserAvatar" size="large" icon="md-contact" />
             <div class="user-name">聊天系统Beta</div>
             <div class="user-status">
               <Icon type="ios-radio-button-on" />
@@ -118,16 +118,18 @@ export default {
       currentChatAvatar: "",
       currentChatId: null, // 当前聊天对象ID
       currentUserId: this.getCookie("userId"), // 当前用户ID
+      currentUserAvatar: '', // 当前用户头像
       isFriendChat: true, // 标识当前是否为好友聊天
       intervalId: null, // 定时器ID
     };
   },
   methods: {
     sendMessage() {
-      if (this.newMessage.trim() !== "") {
+      if (this.newMessage.trim() !== "" && this.currentChatId !== null) { // 确保currentChatId不为空
         const newMessage = {
           groupId: this.isFriendChat ? null : this.currentChatId,
           senderId: this.currentUserId,
+          receiverId: this.isFriendChat ? this.currentChatId : null, // 添加receiverId
           messageText: this.newMessage,
           isGroup: !this.isFriendChat
         };
@@ -145,6 +147,9 @@ export default {
             this.scrollToBottom();
           }
         });
+      } else {
+        // 提示用户选择聊天对象
+        this.$Message.error("请选择聊天对象");
       }
     },
     fetchMessages() {
@@ -225,7 +230,9 @@ export default {
       return friend ? friend.friendNickname : message.senderName;
     },
     getSenderAvatar(senderId) {
-      if (senderId === this.currentUserId) return this.currentChatAvatar;
+      if (senderId === this.currentUserId) {
+        return this.currentUserAvatar; // 使用当前用户的头像
+      }
       const friend = this.friends.find(f => f.friendId === senderId);
       return friend ? friend.avatarUrl : 'https://s1.imagehub.cc/images/2024/07/06/1a05e112ae8dfbd47b415c294facc655.th.png'; // 默认头像
     },
@@ -238,6 +245,7 @@ export default {
   mounted() {
     this.fetchFriends();
     this.fetchGroups();
+    this.currentUserAvatar = this.getCookie("userAvatar"); // 从cookie中获取用户头像
   },
   beforeDestroy() {
     clearInterval(this.intervalId); // 在组件销毁前清除定时器

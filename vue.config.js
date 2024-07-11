@@ -35,7 +35,7 @@ const config = {
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://192.168.12.225:8081',
+        target: 'http://localhost:8081',
         changeOrigin: true,
         logLevel: 'debug' // 添加这一行来查看代理的详细日志
       }

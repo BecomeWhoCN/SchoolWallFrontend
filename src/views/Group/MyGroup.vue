@@ -131,7 +131,7 @@ export default {
           messageText: this.newMessage,
           isGroup: !this.isFriendChat
         };
-        axios.post('/api/scGroupMessages/send', newMessage).then(response => {
+        axios.post('/api/privateMessages/send', newMessage).then(response => {
           if (response.data.success) {
             const message = {
               messageId: Date.now(), // 用当前时间戳作为临时ID

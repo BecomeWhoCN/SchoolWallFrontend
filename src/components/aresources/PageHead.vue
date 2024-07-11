@@ -9,7 +9,7 @@
       /></a>
     </div>
     <div class="user-container">
-      <div v-if="!user">
+      <div v-if="!user || !user.userId">
         <Button type="text" @click="switchToLogin">登录</Button>
         <Button type="text" @click="switchToRegister">注册</Button>
       </div>
@@ -35,7 +35,7 @@
       :mask-closable="false"
     >
       <Card
-        v-if="user"
+        v-if="user && user.userId"
         class="user-info-card"
         style="width: 250px"
         bordered
@@ -115,7 +115,7 @@
             注销账号
           </MenuItem>
         </Submenu>
-        <MenuItem name="6-1" v-if="user.userRole === 'admin'">
+        <MenuItem name="6-1" v-if="user && user.userRole === 'admin'">
             <Icon type="md-alert" />
             管理员界面
           </MenuItem>
@@ -141,6 +141,7 @@
 </template>
 
 <script>
+
 import {
   Button,
   Message,
@@ -176,13 +177,23 @@ export default {
   },
   data() {
     return {
-      user: null,
+      user: {
+        userId: null,
+        userEmail: null,
+        userRole: null,
+        userName: '',
+        userPhone: '',
+        userGender: '',
+        userOnlineStatus: '',
+        userBio: '',
+        scUserAvatars: ''
+      },
       drawerVisible: false,
       userAvatar: "/path/to/default/avatar.png", // 默认头像路径
       deactivationConfirmVisible: false,
       passwordModalVisible: false,
       password: "",
-      userRole:"User",
+      userRole: "User",
     };
   },
   computed: {
@@ -200,15 +211,13 @@ export default {
       const userEmail = Cookies.get("userEmail");
       const userRole = Cookies.get("userRole");
       if (userId && userEmail && userRole) {
-        this.user = {
-          userId,
-          userEmail,
-          userRole,
-        };
+        this.user.userId = userId;
+        this.user.userEmail = userEmail;
+        this.user.userRole = userRole;
       }
     },
     admin() {
-      return this.user.userRole === "Admin"? true: false;
+      return this.user.userRole === "Admin" ? true : false;
     },
     showDrawer() {
       this.drawerVisible = true;
@@ -226,7 +235,7 @@ export default {
           .get(`/api/scUsers/get_scuserbyid/${userId}`)
           .then((response) => {
             if (response.data.success) {
-              this.user = response.data.data;
+              this.user = { ...this.user, ...response.data.data };
             } else {
               Message.error("无法获取用户信息");
             }
@@ -286,7 +295,6 @@ export default {
         this.$Message.info("此功能还未完善，等待后续开发");
         this.$router.push("/manage-view");
       }
-      },
     },
     confirmDeactivation() {
       this.deactivationConfirmVisible = true;
@@ -334,6 +342,7 @@ export default {
       }
     },
   }
+};
 </script>
 
 <style scoped>
